@@ -1,6 +1,6 @@
 # chaos-crawler
 
-**chaos-crawler** is a shell script that automates the downloading of subdomain data for bug bounty programs from Project Discovery's [Chaos](https://chaos.projectdiscovery.io/) dataset. It organizes the data into a structured directory hierarchy, making it easier for security researchers and bug bounty hunters to access and analyze subdomain information for various programs.
+**chaos-crawler** is a shell script that automates the downloading of subdomain data for bug bounty programs from Project Discovery's [Chaos](https://chaos.projectdiscovery.io/) dataset. It organizes the data into a structured directory hierarchy based on platform and bounty status, making it easier for security researchers and bug bounty hunters to access and analyze subdomain information.
 
 ## Table of Contents
 
@@ -9,11 +9,13 @@
 - [Installation](#installation)
 - [Usage](#usage)
   - [Basic Usage](#basic-usage)
+  - [Filter Options](#filter-options)
+    - [Filter by Bounty Programs](#filter-by-bounty-programs)
+    - [Filter by Platform](#filter-by-platform)
+    - [Combine Filters](#combine-filters)
   - [Custom Base Directory](#custom-base-directory)
   - [Help](#help)
 - [Example Directory Structure](#example-directory-structure)
-- [Contributing](#contributing)
-- [Disclaimer](#disclaimer)
 - [Acknowledgments](#acknowledgments)
 
 ---
@@ -21,10 +23,14 @@
 ## Features
 
 - **Automated Download**: Fetches the latest `index.json` from the Chaos dataset and downloads subdomain zip files for all listed programs.
-- **Organized Directory Structure**: Creates a separate folder for each program under a specified base directory, storing the respective subdomain zip files.
+- **Organized Directory Structure**: Creates a structured folder hierarchy under the base directory:
+  - Platform (e.g., `hackerone`, `bugcrowd`)
+    - `bounty` or `no_bounty` (based on whether the program offers a bounty)
+      - Program directory containing the zip file
 - **Customizable Base Directory**: Allows users to specify their preferred base directory for storing the downloaded data.
-- **Dependency Checks**: Verifies the presence of required tools (`curl`, `jq`) before execution and prompts the user if they are missing.
-- **User-Friendly**: Provides helpful usage instructions and error messages to guide users through the process.
+- **Filter Options**: Supports filtering by bounty status and platform.
+- **Dependency Checks**: Verifies the presence of required tools (`curl`, `jq`) before execution.
+- **User-Friendly**: Provides helpful usage instructions and error messages.
 
 ## Prerequisites
 
@@ -67,10 +73,36 @@ brew install curl jq
 
 ### Basic Usage
 
-Run the script with the default base directory (your home directory):
+Run the script with the default base directory (`$HOME/subdomains`):
 
 ```bash
 ./chaos-crawler.sh
+```
+
+### Filter Options
+
+#### Filter by Bounty Programs
+
+Include only programs that offer bounties:
+
+```bash
+./chaos-crawler.sh -b
+```
+
+#### Filter by Platform
+
+Include only programs from specific platforms:
+
+```bash
+./chaos-crawler.sh -p hackerone,bugcrowd
+```
+
+#### Combine Filters
+
+Include only bounty programs from specific platforms:
+
+```bash
+./chaos-crawler.sh -b -p hackerone,bugcrowd
 ```
 
 ### Custom Base Directory
@@ -92,11 +124,13 @@ Display the help message:
 **Output:**
 
 ```
-Usage: chaos-crawler.sh [-d DIRECTORY]
+Usage: chaos-crawler.sh [options]
 
 Options:
-  -d DIRECTORY   Specify the base directory for downloads (default: /home/youruser)
-  -h, --help     Display this help message
+  -d DIRECTORY            Specify the base directory for downloads (default: /home/youruser/subdomains)
+  -b, --bounty            Include only programs that offer bounties
+  -p, --platform PLATFORMS Specify comma-separated platforms to include (e.g., hackerone,bugcrowd)
+  -h, --help              Display this help message
 ```
 
 ## Example Directory Structure
@@ -104,49 +138,32 @@ Options:
 After running the script, the directory structure will look like this:
 
 ```
-/home/youruser/
-├── netflix/
-│   └── netflix.zip
-├── apple/
-│   └── apple.zip
-└── microsoft/
-    └── microsoft.zip
+/home/youruser/subdomains/
+├── hackerone/
+│   ├── bounty/
+│   │   ├── program1/
+│   │   │   └── program1.zip
+│   │   └── program2/
+│   │       └── program2.zip
+│   └── no_bounty/
+│       └── program3/
+│           └── program3.zip
+├── bugcrowd/
+│   ├── bounty/
+│   │   └── program4/
+│   │       └── program4.zip
+│   └── no_bounty/
+│       └── program5/
+│           └── program5.zip
+└── unknown_platform/
+    └── no_bounty/
+        └── program6/
+            └── program6.zip
 ```
 
-Each program's directory contains a zip file with its subdomains.
-
-## Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. **Fork the Repository**
-
-2. **Create a Feature Branch**
-
-   ```bash
-   git checkout -b feature/YourFeature
-   ```
-
-3. **Commit Your Changes**
-
-   ```bash
-   git commit -am 'Add a new feature'
-   ```
-
-4. **Push to the Branch**
-
-   ```bash
-   git push origin feature/YourFeature
-   ```
-
-5. **Open a Pull Request**
-
-Feel free to open an [issue](https://github.com/aldenpartridge/chaos-crawler/issues) for suggestions or bug reports.
-
-## Disclaimer
-
-This script is provided "as is", without warranty of any kind. Use it at your own risk. The author is not responsible for any damage or legal issues caused by the use of this script.
-
+- **Platform Directories**: Programs are organized under their respective platforms.
+- **Bounty Status**: Each platform directory contains `bounty` and `no_bounty` subdirectories.
+- **Program Directories**: Each program has its own directory containing the zip file.
 ## Acknowledgments
 
 - [Project Discovery's Chaos Dataset](https://chaos.projectdiscovery.io/) for providing the subdomain data.
