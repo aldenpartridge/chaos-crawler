@@ -1,6 +1,6 @@
 # chaos-crawler
 
-**chaos-crawler** is a shell script that automates the downloading of subdomain data for bug bounty programs from Project Discovery's [Chaos](https://chaos.projectdiscovery.io/) dataset. It organizes the data into a structured directory hierarchy based on platform and bounty status, making it easier for security researchers and bug bounty hunters to access and analyze subdomain information.
+**chaos-crawler** is a powerful Bash script designed to automate the downloading, organizing, and processing of subdomain data for bug bounty programs from Project Discovery's [Chaos](https://chaos.projectdiscovery.io/) dataset. It streamlines the workflow for security researchers and bug bounty hunters by structuring data based on bug bounty platforms and bounty availability, unzipping relevant files, and processing text data for further analysis.
 
 ## Table of Contents
 
@@ -22,22 +22,29 @@
 
 ## Features
 
-- **Automated Download**: Fetches the latest `index.json` from the Chaos dataset and downloads subdomain zip files for all listed programs.
-- **Organized Directory Structure**: Creates a structured folder hierarchy under the base directory:
-  - Platform (e.g., `hackerone`, `bugcrowd`)
-    - `bounty` or `no_bounty` (based on whether the program offers a bounty)
-      - Program directory containing the zip file
-- **Customizable Base Directory**: Allows users to specify their preferred base directory for storing the downloaded data.
-- **Filter Options**: Supports filtering by bounty status and platform.
-- **Dependency Checks**: Verifies the presence of required tools (`curl`, `jq`) before execution.
-- **User-Friendly**: Provides helpful usage instructions and error messages.
+- **Automated Download:** Fetches subdomain data in `.zip` format from the Chaos dataset.
+- **Organized Directory Structure:** Structures data by:
+  - **Platform:** e.g., `hackerone`, `bugcrowd`, or `unknown_platform`.
+  - **Bounty Status:** `bounty` or `no_bounty` based on whether the program offers a bounty.
+  - **Program Directory:** Contains the program's zip file, unzipped contents, concatenated text files, and processed output.
+- **Unzipping:** Automatically extracts downloaded zip files into their respective program directories.
+- **Concatenation:** Combines all `.txt` files within a program directory into a single `placeholder.txt`.
+- **Processing:** Processes `placeholder.txt` using the `chars` command (fallback to `wc -m` if `chars` is unavailable) and saves the output as a file named after the bug bounty program.
+- **URL Validation:** Ensures that only well-formed URLs are processed and downloaded.
+- **Customizable Base Directory:** Allows users to specify their preferred location for storing the data.
+- **Filter Options:** Supports filtering by bounty status and bug bounty platform.
+- **Dependency Checks:** Verifies the presence of required tools (`curl`, `jq`, `unzip`) before execution.
+- **User-Friendly:** Provides clear output messages, error handling, and notifications upon completion.
+
+---
 
 ## Prerequisites
 
-Ensure you have the following tools installed:
+Ensure you have the following tools installed on your system:
 
-- **curl**: Command-line tool for transferring data with URLs.
-- **jq**: Command-line JSON processor.
+- **curl:** Command-line tool for transferring data with URLs.
+- **jq:** Command-line JSON processor.
+- **unzip:** Utility for unpacking `.zip` files.
 
 ### Installing Dependencies
 
@@ -45,21 +52,23 @@ Ensure you have the following tools installed:
 
 ```bash
 sudo apt-get update
-sudo apt-get install curl jq
+sudo apt-get install curl jq unzip
 ```
 
 **For macOS (using Homebrew):**
 
 ```bash
-brew install curl jq
+brew install curl jq unzip
 ```
+
+---
 
 ## Installation
 
 1. **Clone the Repository:**
 
    ```bash
-   git clone https://github.com/aldenpartridge/chaos-crawler.git
+   git clone https://github.com/yourusername/chaos-crawler.git
    cd chaos-crawler
    ```
 
@@ -68,6 +77,8 @@ brew install curl jq
    ```bash
    chmod +x chaos-crawler.sh
    ```
+
+---
 
 ## Usage
 
@@ -127,11 +138,13 @@ Display the help message:
 Usage: chaos-crawler.sh [options]
 
 Options:
-  -d DIRECTORY            Specify the base directory for downloads (default: /home/youruser/subdomains)
-  -b, --bounty            Include only programs that offer bounties
-  -p, --platform PLATFORMS Specify comma-separated platforms to include (e.g., hackerone,bugcrowd)
-  -h, --help              Display this help message
+  -d DIRECTORY              Specify the base directory for downloads (default: /home/youruser/subdomains)
+  -b, --bounty              Include only programs that offer bounties
+  -p, --platform PLATFORMS   Specify comma-separated platforms to include (e.g., hackerone,bugcrowd)
+  -h, --help                Display this help message
 ```
+
+---
 
 ## Example Directory Structure
 
@@ -142,28 +155,52 @@ After running the script, the directory structure will look like this:
 ├── hackerone/
 │   ├── bounty/
 │   │   ├── program1/
-│   │   │   └── program1.zip
+│   │   │   ├── program1.zip
+│   │   │   ├── extracted_file1.txt
+│   │   │   ├── extracted_file2.txt
+│   │   │   ├── placeholder.txt
+│   │   │   └── program1 (processed output)
 │   │   └── program2/
-│   │       └── program2.zip
+│   │       ├── program2.zip
+│   │       └── ...
 │   └── no_bounty/
-│       └── program3/
-│           └── program3.zip
+│       ├── program3/
+│       │   ├── program3.zip
+│       │   └── ...
+│       └── ...
 ├── bugcrowd/
 │   ├── bounty/
 │   │   └── program4/
-│   │       └── program4.zip
+│   │       ├── program4.zip
+│   │       └── ...
 │   └── no_bounty/
-│       └── program5/
-│           └── program5.zip
+│       ├── program5/
+│       │   ├── program5.zip
+│       │   └── ...
+│       └── ...
 └── unknown_platform/
+    ├── bounty/
+    │   ├── program6/
+    │   │   ├── program6.zip
+    │   │   └── ...
+    │   └── ...
     └── no_bounty/
-        └── program6/
-            └── program6.zip
+        ├── program7/
+        │   ├── program7.zip
+        │   └── ...
+        └── ...
 ```
 
-- **Platform Directories**: Programs are organized under their respective platforms.
-- **Bounty Status**: Each platform directory contains `bounty` and `no_bounty` subdirectories.
-- **Program Directories**: Each program has its own directory containing the zip file.
+- **Platform Directories:** Programs are organized under their respective platforms (`hackerone`, `bugcrowd`, etc.). Programs without a specified platform are placed under `unknown_platform`.
+- **Bounty Status:** Each platform directory contains `bounty` and `no_bounty` subdirectories.
+- **Program Directories:** Each program has its own directory containing:
+  - The downloaded `.zip` file.
+  - Extracted `.txt` files.
+  - `placeholder.txt` (concatenated `.txt` files).
+  - Processed output file named after the program.
+
+---
+
 ## Acknowledgments
 
 - [Project Discovery's Chaos Dataset](https://chaos.projectdiscovery.io/) for providing the subdomain data.
