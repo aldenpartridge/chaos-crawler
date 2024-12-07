@@ -68,7 +68,7 @@ brew install curl jq unzip
 1. **Clone the Repository:**
 
    ```bash
-   git clone https://github.com/yourusername/chaos-crawler.git
+   git clone https://github.com/aldenpartridge/chaos-crawler.git
    cd chaos-crawler
    ```
 
