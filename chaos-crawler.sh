@@ -28,11 +28,19 @@ validate_url() {
     local url="$1"
     local url_regex="^(https?:\/\/)?(([a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)+[a-zA-Z]{2,6}(:[0-9]{1,5})?(\/.*)?$"
 
-    if [[ "$url" =~ $url_regex ]]; then
-        return 0
-    else
-        return 1
-    fi
+    [[ "$url" =~ $url_regex ]]
+}
+
+process_urls() {
+    local input_file="$1"
+    local output_file="$2"
+
+    while IFS= read -r line; do
+        cleaned_line="${line#"${line%%[!.*]*}"}"
+        if validate_url "$cleaned_line"; then
+            echo "$cleaned_line" >> "$output_file"
+        fi
+    done < "$input_file"
 }
 
 while [[ "$#" -gt 0 ]]; do
@@ -135,6 +143,7 @@ jq -c ".[] | $jq_filter" index.json | while read -r program; do
 
     if [ $? -ne 0 ]; then
         echo "Error: Failed to unzip $zip_file."
+        rm "$zip_file"
         continue
     fi
 
@@ -147,14 +156,15 @@ jq -c ".[] | $jq_filter" index.json | while read -r program; do
 
     if [ -f "$program_dir/placeholder.txt" ]; then
         echo "Processing placeholder.txt for $program_name..."
-        if command -v chars &> /dev/null; then
-            chars "$program_dir/placeholder.txt" > "$program_dir/$sanitized_name"
-        else
-            echo "'chars' command not found. Using 'wc -m' as a placeholder."
-            wc -m < "$program_dir/placeholder.txt" > "$program_dir/$sanitized_name"
-        fi
+        processed_output="$program_dir/processed_placeholder.txt"
+        process_urls "$program_dir/placeholder.txt" "$processed_output"
+        mv "$processed_output" "$program_dir/$sanitized_name"
         rm "$program_dir/placeholder.txt"
     fi
+
+    echo "Cleaning up temporary files for $program_name..."
+    rm "$program_dir"/*.txt
+    rm "$zip_file"
 
     echo "Completed processing for $program_name."
 
